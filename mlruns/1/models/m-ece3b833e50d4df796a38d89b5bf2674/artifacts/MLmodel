@@ -1,0 +1,22 @@
+artifact_path: file:C:/Users/Ali Raza/Desktop/fraud-transaction-detection/mlruns/1/models/m-ece3b833e50d4df796a38d89b5bf2674/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.13.1
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 3.3.0
+mlflow_version: 3.14.0
+model_id: m-ece3b833e50d4df796a38d89b5bf2674
+model_size_bytes: 2531767
+model_uuid: m-ece3b833e50d4df796a38d89b5bf2674
+prompts: null
+run_id: 6fb63c5003de417abfad233defa272af
+utc_time_created: '2026-07-31 06:31:24.527094'
