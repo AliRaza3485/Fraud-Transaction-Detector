@@ -17,6 +17,8 @@ import os
 from sklearn.preprocessing import StandardScaler
 import joblib
 
+from src.config import CONFIG
+
 
 def load_processed_data(filepath: str) -> pd.DataFrame:
     """
@@ -35,7 +37,7 @@ def drop_unnecessary_columns(df: pd.DataFrame) -> pd.DataFrame:
     - isFlaggedFraud: extremely weak (caught only 16/8213 frauds), risk of leakage
     - step: fraud was found to be spread randomly across all time steps
     """
-    columns_to_drop = ["nameOrig", "nameDest", "isFlaggedFraud", "step"]
+    columns_to_drop = CONFIG.features.columns_to_drop
 
     existing_cols_to_drop = [col for col in columns_to_drop if col in df.columns]
     df = df.drop(columns=existing_cols_to_drop)
@@ -72,8 +74,8 @@ def encode_categorical(df: pd.DataFrame) -> pd.DataFrame:
 
 def scale_features(
     df: pd.DataFrame,
-    target_col: str = "isFraud",
-    scaler_output_path: str = "models/scaler.pkl",
+    target_col: str = CONFIG.features.target_col,
+    scaler_output_path: str = CONFIG.paths.scaler,
 ) -> pd.DataFrame:
     """
     Apply StandardScaler to numeric features (not the target column,
@@ -83,14 +85,7 @@ def scale_features(
     on new/unseen data (very important — never re-fit scaler on test data).
     """
     # Columns to scale: continuous numeric features only
-    numeric_cols = [
-        "amount",
-        "amount_log",
-        "oldbalanceOrg",
-        "newbalanceOrig",
-        "oldbalanceDest",
-        "newbalanceDest",
-    ]
+    numeric_cols = CONFIG.features.numeric_cols
     numeric_cols = [col for col in numeric_cols if col in df.columns]
 
     scaler = StandardScaler()
@@ -115,17 +110,17 @@ def save_featured_data(df: pd.DataFrame, output_path: str) -> None:
 
 
 def main():
-    # File paths
-    input_path = "data/processed/cleaned_transactions.csv"
-    output_path = "data/processed/featured_transactions.csv"
-    scaler_path = "models/scaler.pkl"
+    # File paths (from central config)
+    input_path = CONFIG.paths.cleaned_data
+    output_path = CONFIG.paths.featured_data
+    scaler_path = CONFIG.paths.scaler
 
     # Pipeline steps
     df = load_processed_data(input_path)
     df = drop_unnecessary_columns(df)
     df = create_domain_features(df)
     df = encode_categorical(df)
-    df = scale_features(df, target_col="isFraud", scaler_output_path=scaler_path)
+    df = scale_features(df, target_col=CONFIG.features.target_col, scaler_output_path=scaler_path)
     save_featured_data(df, output_path)
 
     print("\nFinal feature set columns:")

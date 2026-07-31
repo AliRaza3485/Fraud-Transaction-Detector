@@ -8,6 +8,8 @@ cleans it if necessary, and saves the processed version.
 import pandas as pd
 import os
 
+from src.config import CONFIG
+
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -78,9 +80,9 @@ def save_processed_data(df: pd.DataFrame, output_path: str) -> None:
 
 
 def main():
-    # File paths
-    raw_data_path = "data/raw/PS_20174392719_1491204439457_log.csv"
-    processed_data_path = "data/processed/cleaned_transactions.csv"
+    # File paths (from central config)
+    raw_data_path = CONFIG.paths.raw_data
+    processed_data_path = CONFIG.paths.cleaned_data
 
     # Pipeline steps
     df = load_data(raw_data_path)

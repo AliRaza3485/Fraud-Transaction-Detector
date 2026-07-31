@@ -1,0 +1,76 @@
+# =============================================================================
+# Central configuration for the fraud-detection pipeline.
+#
+# All file paths are relative to the PROJECT ROOT (the folder containing this
+# `configs/` directory). src/config.py resolves them to absolute paths, so the
+# pipeline works no matter which directory you run it from.
+# =============================================================================
+
+paths:
+  # Data
+  raw_data: "data/raw/PS_20174392719_1491204439457_log.csv"
+  cleaned_data: "data/processed/cleaned_transactions.csv"
+  featured_data: "data/processed/featured_transactions.csv"
+  processed_dir: "data/processed"
+
+  # Train/test splits (live inside processed_dir)
+  x_train: "data/processed/X_train.csv"
+  x_test: "data/processed/X_test.csv"
+  y_train: "data/processed/y_train.csv"
+  y_test: "data/processed/y_test.csv"
+
+  # Artifacts
+  scaler: "models/scaler.pkl"
+
+# Feature engineering
+features:
+  target_col: "isFraud"
+  # Columns dropped based on EDA (see build_features.py for reasoning)
+  columns_to_drop:
+    - "nameOrig"
+    - "nameDest"
+    - "isFlaggedFraud"
+    - "step"
+  # Continuous numeric columns that get StandardScaler'd
+  numeric_cols:
+    - "amount"
+    - "amount_log"
+    - "oldbalanceOrg"
+    - "newbalanceOrig"
+    - "oldbalanceDest"
+    - "newbalanceDest"
+
+# Train/test split
+split:
+  test_size: 0.2
+  random_state: 42
+
+# MLflow
+mlflow:
+  tracking_uri: "sqlite:///mlflow.db"
+  experiment_name: "fraud-detection-baseline-models"
+  registry_name: "fraud-detection-xgboost"
+  model_version: "1"
+
+# Model training
+model:
+  # Best hyperparameters found via Optuna (see notebooks/1_model_experimentation.ipynb)
+  best_params:
+    n_estimators: 311
+    max_depth: 9
+    learning_rate: 0.04024002876092483
+    subsample: 0.9287785379436121
+    colsample_bytree: 0.6334229051857528
+    scale_pos_weight: 62.578776638611785
+  random_state: 42
+  eval_metric: "logloss"
+  # Minimum F1 the tuned model must beat before being registered
+  baseline_f1_score: 0.68
+
+# Prediction / inference
+predict:
+  # Decision threshold: probability >= threshold -> flagged as fraud
+  threshold: 0.5
+  # Number of rows to sample in the demo main()
+  sample_size: 10
+  sample_random_state: 1

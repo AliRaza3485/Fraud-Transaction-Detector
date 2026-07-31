@@ -9,6 +9,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import os
 
+from src.config import CONFIG
+
 
 def load_featured_data(filepath: str) -> pd.DataFrame:
     print(f"Loading featured data from: {filepath}")
@@ -19,9 +21,9 @@ def load_featured_data(filepath: str) -> pd.DataFrame:
 
 def split_data(
     df: pd.DataFrame,
-    target_col: str = "isFraud",
-    test_size: float = 0.2,
-    random_state: int = 42,
+    target_col: str = CONFIG.features.target_col,
+    test_size: float = CONFIG.split.test_size,
+    random_state: int = CONFIG.split.random_state,
 ):
     """
     Split data into train/test sets using stratification on the target,
@@ -49,17 +51,17 @@ def split_data(
 def save_splits(X_train, X_test, y_train, y_test, output_dir: str):
     os.makedirs(output_dir, exist_ok=True)
 
-    X_train.to_csv(f"{output_dir}/X_train.csv", index=False)
-    X_test.to_csv(f"{output_dir}/X_test.csv", index=False)
-    y_train.to_csv(f"{output_dir}/y_train.csv", index=False)
-    y_test.to_csv(f"{output_dir}/y_test.csv", index=False)
+    X_train.to_csv(CONFIG.paths.x_train, index=False)
+    X_test.to_csv(CONFIG.paths.x_test, index=False)
+    y_train.to_csv(CONFIG.paths.y_train, index=False)
+    y_test.to_csv(CONFIG.paths.y_test, index=False)
 
     print(f"Train/test splits saved to: {output_dir}")
 
 
 def main():
-    input_path = "data/processed/featured_transactions.csv"
-    output_dir = "data/processed"
+    input_path = CONFIG.paths.featured_data
+    output_dir = CONFIG.paths.processed_dir
 
     df = load_featured_data(input_path)
     X_train, X_test, y_train, y_test = split_data(df)
