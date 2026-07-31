@@ -32,3 +32,36 @@ jobs:
       if: always()
       run: |
         echo "Tests completed. Check logs above for results."
+
+  # ==================== CD: Build & push Docker image ====================
+  # Runs ONLY after 'test' passes (needs: test), and ONLY on a push to main
+  # (not on pull requests, not on develop). This keeps the registry clean —
+  # only tested, main-branch code becomes a published image.
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/fraud-detection-api:latest
+        # Cache layers between runs so rebuilds are faster (don't re-download
+        # every dependency each time).
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
