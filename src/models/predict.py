@@ -5,6 +5,8 @@ Loads the registered model and reuses the SAME feature engineering
 functions from build_features.py to ensure consistency with training.
 """
 
+import os
+
 import pandas as pd
 import joblib
 import mlflow
@@ -28,8 +30,30 @@ NUMERIC_COLS = CONFIG.features.numeric_cols
 
 
 def load_model():
-    logger.info("Loading model '%s' version %s from MLflow...", MODEL_NAME, MODEL_VERSION)
-    model = mlflow.xgboost.load_model(f"models:/{MODEL_NAME}/{MODEL_VERSION}")
+    """
+    Load the trained model.
+
+    Two ways, chosen by the MODEL_URI environment variable:
+
+    * MODEL_URI unset (local dev): load from the MLflow Model Registry
+      (models:/name/version). This needs mlflow.db + mlruns/, whose
+      artifact paths are absolute Windows paths — fine on this machine.
+
+    * MODEL_URI set (Docker/production): load directly from that path
+      (e.g. /app/model). This avoids the registry entirely, so it is
+      portable — the container never sees a Windows-only absolute path.
+    """
+    model_uri = os.environ.get("MODEL_URI")
+    if model_uri:
+        logger.info("Loading model from MODEL_URI: %s", model_uri)
+    else:
+        model_uri = f"models:/{MODEL_NAME}/{MODEL_VERSION}"
+        logger.info(
+            "Loading model '%s' version %s from MLflow registry...",
+            MODEL_NAME,
+            MODEL_VERSION,
+        )
+    model = mlflow.xgboost.load_model(model_uri)
     logger.info("Model loaded successfully.")
     return model
 
