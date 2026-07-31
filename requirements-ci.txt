@@ -1,0 +1,26 @@
+# CI dependencies — only what src/ and tests/ actually import.
+# Kept separate from the full requirements.txt (a 236-package venv freeze)
+# so CI installs are fast, reproducible, and don't break on unrelated packages.
+# Versions pinned to match the local development environment.
+
+# Core ML / data
+numpy==2.5.1
+pandas==2.3.3
+scikit-learn==1.9.0
+xgboost==3.3.0
+joblib==1.5.3
+
+# Experiment tracking / model registry
+mlflow==3.14.0
+
+# Config
+PyYAML==6.0.3
+
+# API layer
+fastapi==0.141.1
+uvicorn==0.52.0
+pydantic==2.13.4
+
+# Testing
+pytest==9.1.1
+httpx==0.28.1
