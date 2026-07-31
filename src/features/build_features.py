@@ -18,15 +18,18 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 from src.config import CONFIG
+from src.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def load_processed_data(filepath: str) -> pd.DataFrame:
     """
     Load the cleaned dataset produced by make_dataset.py
     """
-    print(f"Loading processed data from: {filepath}")
+    logger.info("Loading processed data from: %s", filepath)
     df = pd.read_csv(filepath)
-    print(f"Data loaded. Shape: {df.shape}")
+    logger.info("Data loaded. Shape: %s", df.shape)
     return df
 
 
@@ -42,7 +45,7 @@ def drop_unnecessary_columns(df: pd.DataFrame) -> pd.DataFrame:
     existing_cols_to_drop = [col for col in columns_to_drop if col in df.columns]
     df = df.drop(columns=existing_cols_to_drop)
 
-    print(f"Dropped columns: {existing_cols_to_drop}")
+    logger.info("Dropped columns: %s", existing_cols_to_drop)
     return df
 
 
@@ -57,7 +60,7 @@ def create_domain_features(df: pd.DataFrame) -> pd.DataFrame:
     # log1p handles zero values safely (log(1+x) instead of log(x))
     df["amount_log"] = np.log1p(df["amount"])
 
-    print("Created features: is_transfer_or_cashout, amount_log")
+    logger.info("Created features: is_transfer_or_cashout, amount_log")
     return df
 
 
@@ -68,7 +71,7 @@ def encode_categorical(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = pd.get_dummies(df, columns=["type"], prefix="type", drop_first=True)
 
-    print("Encoded 'type' column using One-Hot Encoding")
+    logger.info("Encoded 'type' column using One-Hot Encoding")
     return df
 
 
@@ -95,8 +98,8 @@ def scale_features(
     os.makedirs(os.path.dirname(scaler_output_path), exist_ok=True)
     joblib.dump(scaler, scaler_output_path)
 
-    print(f"Scaled columns: {numeric_cols}")
-    print(f"Scaler saved to: {scaler_output_path}")
+    logger.info("Scaled columns: %s", numeric_cols)
+    logger.info("Scaler saved to: %s", scaler_output_path)
     return df
 
 
@@ -106,7 +109,7 @@ def save_featured_data(df: pd.DataFrame, output_path: str) -> None:
     """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df.to_csv(output_path, index=False)
-    print(f"Featured data saved to: {output_path}")
+    logger.info("Featured data saved to: %s", output_path)
 
 
 def main():
@@ -123,9 +126,8 @@ def main():
     df = scale_features(df, target_col=CONFIG.features.target_col, scaler_output_path=scaler_path)
     save_featured_data(df, output_path)
 
-    print("\nFinal feature set columns:")
-    print(df.columns.tolist())
-    print(f"\nFinal shape: {df.shape}")
+    logger.info("Final feature set columns: %s", df.columns.tolist())
+    logger.info("Final shape: %s", df.shape)
 
 
 if __name__ == "__main__":

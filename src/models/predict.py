@@ -17,6 +17,9 @@ from src.features.build_features import (
     encode_categorical,
 )
 from src.config import CONFIG
+from src.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 MODEL_NAME = CONFIG.mlflow.registry_name
 MODEL_VERSION = CONFIG.mlflow.model_version
@@ -25,14 +28,14 @@ NUMERIC_COLS = CONFIG.features.numeric_cols
 
 
 def load_model():
-    print(f"Loading model '{MODEL_NAME}' version {MODEL_VERSION} from MLflow...")
+    logger.info("Loading model '%s' version %s from MLflow...", MODEL_NAME, MODEL_VERSION)
     model = mlflow.xgboost.load_model(f"models:/{MODEL_NAME}/{MODEL_VERSION}")
-    print("Model loaded successfully.")
+    logger.info("Model loaded successfully.")
     return model
 
 
 def load_scaler(scaler_path: str = SCALER_PATH):
-    print(f"Loading scaler from: {scaler_path}")
+    logger.info("Loading scaler from: %s", scaler_path)
     scaler = joblib.load(scaler_path)
     return scaler
 
@@ -94,8 +97,7 @@ def main():
         X_new = X_new.drop(columns=["isFraud"])
 
     results = predict(model, X_new)
-    print("\nPrediction Results:")
-    print(results)
+    logger.info("Prediction Results:\n%s", results)
 
 
 if __name__ == "__main__":

@@ -26,6 +26,9 @@ from sklearn.metrics import (
 )
 
 from src.config import CONFIG
+from src.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # Best hyperparameters found via Optuna (loaded from configs/config.yaml)
 BEST_PARAMS = CONFIG.model.best_params.to_dict()
@@ -38,13 +41,13 @@ def load_train_test_data():
     """
     Load the pre-split train/test data created by split_data.py
     """
-    print("Loading train/test data...")
+    logger.info("Loading train/test data...")
     X_train = pd.read_csv(CONFIG.paths.x_train)
     X_test = pd.read_csv(CONFIG.paths.x_test)
     y_train = pd.read_csv(CONFIG.paths.y_train).values.ravel()
     y_test = pd.read_csv(CONFIG.paths.y_test).values.ravel()
 
-    print(f"X_train shape: {X_train.shape}, X_test shape: {X_test.shape}")
+    logger.info("X_train shape: %s, X_test shape: %s", X_train.shape, X_test.shape)
     return X_train, X_test, y_train, y_test
 
 
@@ -53,7 +56,7 @@ def train_final_model(X_train, y_train, params: dict) -> XGBClassifier:
     Train the final XGBoost model on the FULL training data,
     using the best hyperparameters found via Optuna.
     """
-    print("Training final model on full training data...")
+    logger.info("Training final model on full training data...")
     model = XGBClassifier(
         **params,
         random_state=CONFIG.model.random_state,
@@ -61,7 +64,7 @@ def train_final_model(X_train, y_train, params: dict) -> XGBClassifier:
         eval_metric=CONFIG.model.eval_metric,
     )
     model.fit(X_train, y_train)
-    print("Training complete.")
+    logger.info("Training complete.")
     return model
 
 
@@ -80,11 +83,9 @@ def evaluate_model(model: XGBClassifier, X_test, y_test) -> dict:
         "roc_auc": roc_auc_score(y_test, y_pred_proba),
     }
 
-    print("Classification Report:")
-    print(classification_report(y_test, y_pred))
-    print("Confusion Matrix:")
-    print(confusion_matrix(y_test, y_pred))
-    print("Metrics:", metrics)
+    logger.info("Classification Report:\n%s", classification_report(y_test, y_pred))
+    logger.info("Confusion Matrix:\n%s", confusion_matrix(y_test, y_pred))
+    logger.info("Metrics: %s", metrics)
 
     return metrics
 
@@ -114,20 +115,23 @@ def log_and_register_model(
         mlflow.xgboost.log_model(model, "model")
 
         run_id = mlflow.active_run().info.run_id
-        print(f"Model logged under run_id: {run_id}")
+        logger.info("Model logged under run_id: %s", run_id)
 
         # Register only if it beats the baseline
         if metrics["f1_score"] > BASELINE_F1_SCORE:
             model_uri = f"runs:/{run_id}/model"
             mlflow.register_model(model_uri=model_uri, name=model_registry_name)
-            print(
-                f"Model registered as '{model_registry_name}' "
-                f"(F1={metrics['f1_score']:.4f} > baseline={BASELINE_F1_SCORE})"
+            logger.info(
+                "Model registered as '%s' (F1=%.4f > baseline=%s)",
+                model_registry_name,
+                metrics["f1_score"],
+                BASELINE_F1_SCORE,
             )
         else:
-            print(
-                f"Model NOT registered — F1={metrics['f1_score']:.4f} "
-                f"did not beat baseline={BASELINE_F1_SCORE}"
+            logger.warning(
+                "Model NOT registered — F1=%.4f did not beat baseline=%s",
+                metrics["f1_score"],
+                BASELINE_F1_SCORE,
             )
 
 

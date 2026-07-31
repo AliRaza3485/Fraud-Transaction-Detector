@@ -9,36 +9,41 @@ import pandas as pd
 import os
 
 from src.config import CONFIG
+from src.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
     Load raw CSV data from the given filepath.
     """
-    print(f"Loading data from: {filepath}")
+    logger.info("Loading data from: %s", filepath)
     df = pd.read_csv(filepath)
-    print(f"Data loaded successfully. Shape: {df.shape}")
+    logger.info("Data loaded successfully. Shape: %s", df.shape)
     return df
 
 
 def check_data_quality(df: pd.DataFrame) -> None:
     """
-    Print a data quality report: missing values and duplicate rows.
+    Log a data quality report: missing values and duplicate rows.
     """
-    print("\n--- Data Quality Report ---")
+    logger.info("--- Data Quality Report ---")
 
     # Missing values check
     missing = df.isnull().sum()
     missing_pct = (missing / len(df)) * 100
-    print("\nMissing values per column:")
-    print(missing[missing > 0] if missing.sum() > 0 else "No missing values found.")
+    if missing.sum() > 0:
+        logger.info("Missing values per column:\n%s", missing[missing > 0])
+    else:
+        logger.info("Missing values per column: No missing values found.")
 
     # Duplicate rows check
     duplicate_count = df.duplicated().sum()
     duplicate_pct = (duplicate_count / len(df)) * 100
-    print(f"\nDuplicate rows: {duplicate_count} ({duplicate_pct:.4f}%)")
+    logger.info("Duplicate rows: %s (%.4f%%)", duplicate_count, duplicate_pct)
 
-    print("--- End of Report ---\n")
+    logger.info("--- End of Report ---")
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -60,9 +65,10 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     final_rows = len(df)
     rows_removed = initial_rows - final_rows
 
-    print(
-        f"Cleaning complete. Rows removed: {rows_removed} "
-        f"({(rows_removed / initial_rows) * 100:.4f}%)"
+    logger.info(
+        "Cleaning complete. Rows removed: %s (%.4f%%)",
+        rows_removed,
+        (rows_removed / initial_rows) * 100,
     )
 
     return df
@@ -76,7 +82,7 @@ def save_processed_data(df: pd.DataFrame, output_path: str) -> None:
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     df.to_csv(output_path, index=False)
-    print(f"Processed data saved to: {output_path}")
+    logger.info("Processed data saved to: %s", output_path)
 
 
 def main():

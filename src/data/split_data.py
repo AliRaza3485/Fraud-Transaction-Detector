@@ -10,12 +10,15 @@ from sklearn.model_selection import train_test_split
 import os
 
 from src.config import CONFIG
+from src.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def load_featured_data(filepath: str) -> pd.DataFrame:
-    print(f"Loading featured data from: {filepath}")
+    logger.info("Loading featured data from: %s", filepath)
     df = pd.read_csv(filepath)
-    print(f"Data loaded. Shape: {df.shape}")
+    logger.info("Data loaded. Shape: %s", df.shape)
     return df
 
 
@@ -41,9 +44,9 @@ def split_data(
         stratify=y,  # keeps fraud ratio same in both train and test
     )
 
-    print(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}")
-    print(f"Fraud ratio in train: {y_train.mean():.5f}")
-    print(f"Fraud ratio in test: {y_test.mean():.5f}")
+    logger.info("Train shape: %s, Test shape: %s", X_train.shape, X_test.shape)
+    logger.info("Fraud ratio in train: %.5f", y_train.mean())
+    logger.info("Fraud ratio in test: %.5f", y_test.mean())
 
     return X_train, X_test, y_train, y_test
 
@@ -56,7 +59,7 @@ def save_splits(X_train, X_test, y_train, y_test, output_dir: str):
     y_train.to_csv(CONFIG.paths.y_train, index=False)
     y_test.to_csv(CONFIG.paths.y_test, index=False)
 
-    print(f"Train/test splits saved to: {output_dir}")
+    logger.info("Train/test splits saved to: %s", output_dir)
 
 
 def main():
