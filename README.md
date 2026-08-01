@@ -64,6 +64,8 @@ fraud-transaction-detection/
 │       ├── main.py            # FastAPI app
 │       └── schemas.py         # Request/response models
 ├── tests/                     # pytest unit tests
+├── .github/workflows/ci.yml   # CI/CD pipeline (test → build → deploy)
+├── Dockerfile                 # Container image for the API
 ├── pytest.ini
 └── requirements.txt
 ```
@@ -157,6 +159,59 @@ curl -X POST http://localhost:8000/predict \
 
 Input is validated by Pydantic — an unknown `type` or a negative `amount`
 returns a clear `422` error instead of reaching the model.
+
+---
+
+## Live deployment
+
+The API is deployed to AWS and served publicly:
+
+- **Live API:** http://34.236.46.109
+- **Health check:** http://34.236.46.109/health
+- **Interactive docs:** http://34.236.46.109/docs
+
+### CI/CD pipeline
+
+Every push to `main` triggers a fully automated pipeline defined in
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml). Three chained jobs:
+
+```
+git push main
+     │
+     ▼
+┌──────────┐   ┌───────────────────┐   ┌────────────────────┐
+│  test    │──▶│  docker           │──▶│  deploy            │
+│  pytest  │   │  build & push     │   │  SSH → EC2         │
+│          │   │  image → Docker   │   │  pull + restart    │
+│          │   │  Hub              │   │  container         │
+└──────────┘   └───────────────────┘   └────────────────────┘
+```
+
+1. **test** — runs the pytest suite. Everything downstream only runs if this passes.
+2. **docker** — builds the container image and pushes it to Docker Hub as
+   `alirza24/fraud-detection-api:latest`. Runs only on pushes to `main`.
+3. **deploy** — SSHes into the EC2 instance, pulls the fresh image, and
+   restarts the container. This is the last mile: **`git push` → live server**,
+   no manual steps.
+
+### Infrastructure
+
+| Piece | Detail |
+|-------|--------|
+| Container registry | Docker Hub (`alirza24/fraud-detection-api`) |
+| Host | AWS EC2 (Ubuntu, t3.micro), us-east-1 |
+| Port mapping | host `80` → container `8000` |
+| Model loading | via `MODEL_URI` env var (portable across OS/containers) |
+
+### Run the container locally
+
+```bash
+# Pull the published image and run it
+docker pull alirza24/fraud-detection-api:latest
+docker run -d --name fraud-api -p 8000:8000 alirza24/fraud-detection-api:latest
+
+# Then open http://localhost:8000/docs
+```
 
 ---
 
