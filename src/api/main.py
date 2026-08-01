@@ -18,6 +18,7 @@ Then open the interactive docs at:
 import mlflow
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import CONFIG
 from src.models.predict import load_model, load_scaler, prepare_features, predict
@@ -31,6 +32,16 @@ app = FastAPI(
     title="Fraud Transaction Detection API",
     description="Predicts whether a financial transaction is fraudulent.",
     version="1.0.0",
+)
+
+# Allow the browser-based frontend to call this API. Without CORS the browser
+# blocks cross-origin requests (frontend served from Vercel/localhost calling
+# this EC2 host). "*" allows any origin, which is fine for a public demo API.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Module-level holders for the loaded artifacts (filled at startup).
