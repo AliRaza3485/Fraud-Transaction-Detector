@@ -25,6 +25,9 @@ data/processed/*
 # exception the CI build on GitHub fails: the runner never receives the model.
 # NOTE: git can't re-include a file if a PARENT dir is excluded, so we ignore
 # each level's *contents* (dir/*) and re-include (!) the next dir down.
+# Stray mlruns/ created when running notebooks — not part of the image
+notebooks/mlruns/
+
 mlruns/*
 !mlruns/1/
 mlruns/1/*
