@@ -65,3 +65,30 @@ jobs:
         # every dependency each time).
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+  # ==================== CD: Deploy to EC2 ====================
+  # Runs ONLY after 'docker' pushes the new image, and ONLY on main.
+  # SSHes into the EC2 box, pulls the fresh image, and restarts the
+  # container. This is the last mile: git push -> live server, fully auto.
+  deploy:
+    needs: docker
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Deploy to EC2 over SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          # Pull the freshly-built image from Docker Hub
+          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/fraud-detection-api:latest
+          # Stop & remove the old container (|| true so it doesn't fail if none exists yet)
+          sudo docker stop fraud-api || true
+          sudo docker rm fraud-api || true
+          # Start the new container on port 80
+          sudo docker run -d --name fraud-api -p 80:8000 ${{ secrets.DOCKERHUB_USERNAME }}/fraud-detection-api:latest
+          # Clean up old dangling images so the small EC2 disk doesn't fill up
+          sudo docker image prune -f
